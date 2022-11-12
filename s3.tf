@@ -1,9 +1,23 @@
 #############################
+# Data lake key paths
+#############################
+
+variable "data_lake_bronze" {
+  type = string
+  default = "data-lake/bronze"
+}
+
+variable "data_lake_silver" {
+  type = string
+  default = "data-lake/silver"
+}
+
+#############################
 # Sandbox playground bucket
 #############################
 
-resource "aws_s3_bucket" "liem_sandbox" {
-  bucket = "liem-sandbox"
+resource "aws_s3_bucket" "mls_sandbox" {
+  bucket = "mls-sandbox"
 
   tags = {
     Account     = "ntc.sand.1"
@@ -12,32 +26,13 @@ resource "aws_s3_bucket" "liem_sandbox" {
   }
 }
 
-
 ############################
 # Setup logs folder
 ############################
 
 resource "aws_s3_object" "logs" {
-  bucket = aws_s3_bucket.liem_sandbox.id
+  bucket = aws_s3_bucket.mls_sandbox.id
   key    = "logs/"
-  acl    = "private"
-  source = "/dev/null"
-}
-
-############################
-# Setup data lake folders
-############################
-
-resource "aws_s3_object" "data_lake_bronze" {
-  bucket = aws_s3_bucket.liem_sandbox.id
-  key    = "data-lake/bronze/"
-  acl    = "private"
-  source = "/dev/null"
-}
-
-resource "aws_s3_object" "data_lake_silver" {
-  bucket = aws_s3_bucket.liem_sandbox.id
-  key    = "data-lake/silver/"
   acl    = "private"
   source = "/dev/null"
 }
@@ -47,7 +42,7 @@ resource "aws_s3_object" "data_lake_silver" {
 #####################
 
 resource "aws_s3_object" "code_credit_score_delta" {
-  bucket = aws_s3_bucket.liem_sandbox.id
+  bucket = aws_s3_bucket.mls_sandbox.id
   key    = "code/credit_score_delta.py"
   acl    = "private"
   source = "code/credit_score_delta.py"
@@ -55,7 +50,7 @@ resource "aws_s3_object" "code_credit_score_delta" {
 }
 
 resource "aws_s3_object" "code_credit_score_iceberg" {
-  bucket = aws_s3_bucket.liem_sandbox.id
+  bucket = aws_s3_bucket.mls_sandbox.id
   key    = "code/credit_score_iceberg.py"
   acl    = "private"
   source = "code/credit_score_iceberg.py"

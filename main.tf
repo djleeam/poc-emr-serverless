@@ -83,8 +83,8 @@ resource "aws_iam_policy" "s3_access_rw" {
                 "s3:ListBucket"
             ],
             "Resource": [
-                "arn:aws:s3:::liem-sandbox",
-                "arn:aws:s3:::liem-sandbox/*"
+                "arn:aws:s3:::mls-sandbox",
+                "arn:aws:s3:::mls-sandbox/*"
             ]
         },
         {
@@ -95,7 +95,7 @@ resource "aws_iam_policy" "s3_access_rw" {
                 "s3:DeleteObject"
             ],
             "Resource": [
-                "arn:aws:s3:::liem-sandbox/*"
+                "arn:aws:s3:::mls-sandbox/*"
             ]
         }
     ]

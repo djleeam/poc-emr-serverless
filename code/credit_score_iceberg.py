@@ -1,15 +1,14 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col
-from pyspark.sql.functions import to_date
+from pyspark.sql import functions as F
 
-BUCKET_BRONZE = "s3a://liem-sandbox/data-lake/bronze/"
+BUCKET_BRONZE = "s3a://mls-sandbox/data-lake/bronze/"
 
 spark = (
     SparkSession.builder
     .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
     .config("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
     .config("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
-    .config("spark.sql.catalog.glue_catalog.warehouse", "s3://liem-sandbox/data-lake/silver/")
+    .config("spark.sql.catalog.glue_catalog.warehouse", "s3://mls-sandbox/data-lake/silver/")
     .config("hive.metastore.client.factory.class", "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory")
     .getOrCreate()
 )
@@ -19,7 +18,7 @@ print("Reading CSV file from S3...")
 df0 = spark.read.csv(
     f'{BUCKET_BRONZE}/experian_quest/quest_files/2022/10/experian_quest_quest_files_2022-10-16_129c2549e3c2a0ed2cbcaf45e268ff0e-452.csv', header=True, inferSchema=True
 ) \
-    .withColumn("TRADE_DATE", to_date(col("TRADE_DATE"), "yyyyMMdd"))
+    .withColumn("TRADE_DATE", F.to_date("TRADE_DATE", "yyyyMMdd"))
 
 # select and rename columns
 df = df0.select(

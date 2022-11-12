@@ -21,7 +21,7 @@ PARTITIONED BY (trade_date DATE)
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
 STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.SymlinkTextInputFormat'
 OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat' 
-LOCATION 's3://liem-sandbox/data-lake/silver/credit_score_delta/_symlink_format_manifest/';
+LOCATION 's3://mls-sandbox/data-lake/silver/credit_score_delta/_symlink_format_manifest/';
 ```
 ```
 MSCK REPAIR TABLE credit_score_delta;
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS glue_catalog.data_lake_silver.credit_score_iceberg (
     vantage_v3_score int,
     trade_date date)
 PARTITIONED BY (month(trade_date))
-LOCATION 's3://liem-sandbox/data-lake/silver/credit_score_iceberg'
+LOCATION 's3://mls-sandbox/data-lake/silver/credit_score_iceberg'
 TBLPROPERTIES ('table_type' = 'ICEBERG');
 ```
 
@@ -48,14 +48,14 @@ aws emr-serverless start-job-run \
     --execution-role-arn $JOB_ROLE_ARN \
     --job-driver '{
         "sparkSubmit": {
-            "entryPoint": "s3://liem-sandbox/code/credit_score_delta.py",
+            "entryPoint": "s3://mls-sandbox/code/credit_score_delta.py",
             "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.0.0"
         }
     }' \
     --configuration-overrides '{
         "monitoringConfiguration": {
             "s3MonitoringConfiguration": {
-                "logUri": "s3://liem-sandbox/logs/"
+                "logUri": "s3://mls-sandbox/logs/emr_serverless"
             }
         }
     }' --profile ntc.sand.1
@@ -69,14 +69,14 @@ aws emr-serverless start-job-run \
     --execution-role-arn $JOB_ROLE_ARN \
     --job-driver '{
         "sparkSubmit": {
-            "entryPoint": "s3://liem-sandbox/code/credit_score_iceberg.py",
+            "entryPoint": "s3://mls-sandbox/code/credit_score_iceberg.py",
             "sparkSubmitParameters": "--packages org.apache.iceberg:iceberg-spark-runtime-3.3_2.12:1.0.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
         }
     }' \
     --configuration-overrides '{
         "monitoringConfiguration": {
             "s3MonitoringConfiguration": {
-                "logUri": "s3://liem-sandbox/logs/"
+                "logUri": "s3://mls-sandbox/logs/emr_serverless"
             }
         }
     }' --profile ntc.sand.1
@@ -85,8 +85,8 @@ aws emr-serverless start-job-run \
 
 ## Get Job stdout / stderr
 ```
-aws s3 cp s3://liem-sandbox/logs/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stdout.gz - --profile ntc.sand.1 | gunzip
+aws s3 cp s3://mls-sandbox/logs/emr_serverless/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stdout.gz - --profile ntc.sand.1 | gunzip
 ```
 ```
-aws s3 cp s3://liem-sandbox/logs/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stderr.gz - --profile ntc.sand.1 | gunzip
+aws s3 cp s3://mls-sandbox/logs/emr_serverless/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stderr.gz - --profile ntc.sand.1 | gunzip
 ```
