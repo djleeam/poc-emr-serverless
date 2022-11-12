@@ -3,7 +3,10 @@ provider "aws" {
   profile = "ntc.sand.1"
 }
 
+###########################################
 # Allows EMR Serverless to assume a role.
+###########################################
+
 data "aws_iam_policy_document" "allow_emr_serverless_to_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -15,13 +18,19 @@ data "aws_iam_policy_document" "allow_emr_serverless_to_assume_role" {
   }
 }
 
+#####################################################
 # Role to let the EMR Serverless Job assume a role.
+#####################################################
+
 resource "aws_iam_role" "emr_serverless_job_role" {
   name               = "emr-serverless-job-role"
   assume_role_policy = data.aws_iam_policy_document.allow_emr_serverless_to_assume_role.json
 }
 
+###################################################################
 # Policy to allow read and write access to the Glue Data Catalog
+###################################################################
+
 resource "aws_iam_policy" "glue_access_rw" {
   name        = "GlueAccess"
   description = "Allows read and write access to the Glue Data Catalog"
@@ -54,7 +63,10 @@ resource "aws_iam_policy" "glue_access_rw" {
 EOF
 }
 
+#################################################
 # Policy to allow S3 access to specific buckets
+#################################################
+
 resource "aws_iam_policy" "s3_access_rw" {
   name        = "S3Access"
   description = "Allows S3 access for specific buckets"
@@ -91,13 +103,19 @@ resource "aws_iam_policy" "s3_access_rw" {
 EOF
 }
 
+###################################################################
 # Give EMR Serverless Job role read/write access to Glue Catalog
+###################################################################
+
 resource "aws_iam_role_policy_attachment" "allow_job_to_access_glue_catalog" {
   role       = aws_iam_role.emr_serverless_job_role.name
   policy_arn = aws_iam_policy.glue_access_rw.arn
 }
 
+######################################################################
 # Give EMR Serverless Job role read/write access to specific buckets
+######################################################################
+
 resource "aws_iam_role_policy_attachment" "allow_job_to_access_s3_buckets" {
   role       = aws_iam_role.emr_serverless_job_role.name
   policy_arn = aws_iam_policy.s3_access_rw.arn

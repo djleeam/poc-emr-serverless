@@ -1,3 +1,7 @@
+############################################
+# EMR Serverless Application | Credit Score
+############################################
+
 resource "aws_emrserverless_application" "credit_score_app" {
   name          = "credit-score-app"
   release_label = "emr-6.8.0"
@@ -43,7 +47,10 @@ resource "aws_emrserverless_application" "credit_score_app" {
   }
 }
 
+##################
 # ntc_sand_1 VPC
+##################
+
 data "aws_vpc" "ntc_sand" {
   tags = {
     Owner = "infrastructure"
@@ -51,7 +58,10 @@ data "aws_vpc" "ntc_sand" {
   }
 }
 
+##################################
 # ntc_sand_1 VPC private subnets
+##################################
+
 data "aws_subnets" "private" {
   filter {
     name   = "vpc-id"
@@ -63,7 +73,10 @@ data "aws_subnets" "private" {
   }
 }
 
+###############################################
 # VPC security group for emr serverless apps
+###############################################
+
 resource "aws_security_group" "emr_serverless" {
   name   = "emr-serverless-sg"
   vpc_id = data.aws_vpc.ntc_sand.id
