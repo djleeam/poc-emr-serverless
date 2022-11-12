@@ -3,17 +3,6 @@ provider "aws" {
   profile = "ntc.sand.1"
 }
 
-# S3 bucket for sandbox playground
-resource "aws_s3_bucket" "liem_sandbox" {
-  bucket = "liem-sandbox"
-
-  tags = {
-    Account     = "ntc.sand.1"
-    Env         = "ntc.sand"
-    Environment = "ntc.sand"
-  }
-}
-
 # Allows EMR Serverless to assume a role.
 data "aws_iam_policy_document" "allow_emr_serverless_to_assume_role" {
   statement {
