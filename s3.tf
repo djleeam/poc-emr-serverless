@@ -18,12 +18,6 @@ variable "data_lake_silver" {
 
 resource "aws_s3_bucket" "mls_sandbox" {
   bucket = "mls-sandbox"
-
-  tags = {
-    Account     = "ntc.sand.1"
-    Env         = "ntc.sand"
-    Environment = "ntc.sand"
-  }
 }
 
 ############################
