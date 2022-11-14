@@ -11,7 +11,7 @@ querying of the data lake data from Athena.
 
 Glue table resources were imported into TF after being manually created with the following DDL in Athena.
 
-### Create `credit_score_delta` table and sync manifest with `MSCK`
+### Create `credit_score_delta` table
 ```
 CREATE EXTERNAL TABLE credit_score_delta (
     member_uuid STRING,
@@ -22,9 +22,6 @@ ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.SymlinkTextInputFormat'
 OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat' 
 LOCATION 's3://mls-sandbox/data-lake/silver/credit_score_delta/_symlink_format_manifest/';
-```
-```
-MSCK REPAIR TABLE credit_score_delta;
 ```
 
 ### Create `credit_score_iceberg` table
@@ -105,10 +102,12 @@ aws emr-serverless start-job-run \
     }' --profile ntc.sand.1
 ```
 
-## Get Job stdout / stderr
+## Get job stdout
 ```
 aws s3 cp s3://mls-sandbox/logs/emr_serverless/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stdout.gz - --profile ntc.sand.1 | gunzip | less
 ```
+
+## Get job stderr
 ```
 aws s3 cp s3://mls-sandbox/logs/emr_serverless/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stderr.gz - --profile ntc.sand.1 | gunzip | less
 ```
