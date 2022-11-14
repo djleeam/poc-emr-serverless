@@ -7,11 +7,8 @@ resource "aws_emrserverless_application" "credit_score_app" {
   release_label = "emr-6.8.0"
   type          = "spark"
 
-  #############################################################################################
   # Specify initial & max capacity
   # https://docs.aws.amazon.com/emr/latest/EMR-Serverless-UserGuide/application-capacity.html
-  #############################################################################################
-
   initial_capacity {
     initial_capacity_type = "Driver"
 

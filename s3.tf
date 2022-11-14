@@ -3,12 +3,12 @@
 #############################
 
 variable "data_lake_bronze" {
-  type = string
+  type    = string
   default = "data-lake/bronze"
 }
 
 variable "data_lake_silver" {
-  type = string
+  type    = string
   default = "data-lake/silver"
 }
 

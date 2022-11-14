@@ -13,7 +13,7 @@ resource "aws_glue_catalog_database" "data_lake_silver" {
 resource "aws_glue_catalog_table" "credit_score_iceberg" {
   name          = "credit_score_iceberg"
   database_name = aws_glue_catalog_database.data_lake_silver.name
-  parameters    = {
+  parameters = {
     "metadata_location" = "s3://${aws_s3_bucket.mls_sandbox.id}/${var.data_lake_silver}/credit_score_iceberg/metadata/00001-4f05becf-2bce-4127-8825-0dc84a6a466a.metadata.json"
     "table_type"        = "ICEBERG"
     "format"            = "parquet"
@@ -29,7 +29,7 @@ resource "aws_glue_catalog_table" "credit_score_iceberg" {
     stored_as_sub_directories = false
 
     columns {
-      name       = "member_uuid"
+      name = "member_uuid"
       parameters = {
         "iceberg.field.current"  = "true"
         "iceberg.field.id"       = "1"
@@ -39,7 +39,7 @@ resource "aws_glue_catalog_table" "credit_score_iceberg" {
     }
 
     columns {
-      name       = "vantage_v3_score"
+      name = "vantage_v3_score"
       parameters = {
         "iceberg.field.current"  = "true"
         "iceberg.field.id"       = "2"
@@ -49,7 +49,7 @@ resource "aws_glue_catalog_table" "credit_score_iceberg" {
     }
 
     columns {
-      name       = "trade_date"
+      name = "trade_date"
       parameters = {
         "iceberg.field.current"  = "true"
         "iceberg.field.id"       = "3"
@@ -68,7 +68,7 @@ resource "aws_glue_catalog_table" "credit_score_delta" {
   name          = "credit_score_delta"
   database_name = aws_glue_catalog_database.data_lake_silver.name
   owner         = "hadoop"
-  parameters    = {
+  parameters = {
     "EXTERNAL"              = "TRUE"
     "transient_lastDdlTime" = "1668232110"
   }
