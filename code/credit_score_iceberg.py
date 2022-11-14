@@ -1,7 +1,7 @@
+import sys
+
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
-
-BUCKET_BRONZE = "s3a://mls-sandbox/data-lake/bronze/"
 
 spark = (
     SparkSession.builder
@@ -13,31 +13,35 @@ spark = (
     .getOrCreate()
 )
 
-print("Reading CSV file from S3...")
+def main(argv):
+    print("Reading CSV file from S3...")
 
-df0 = spark.read.csv(
-    f'{BUCKET_BRONZE}/experian_quest/quest_files/2022/10/experian_quest_quest_files_2022-10-16_129c2549e3c2a0ed2cbcaf45e268ff0e-452.csv', header=True, inferSchema=True
-) \
-    .withColumn("TRADE_DATE", F.to_date("TRADE_DATE", "yyyyMMdd"))
+    # Read new data passed in via argv
+    # i.e. s3://mls-sandbox/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16.csv
+    df0 = spark.read.csv(argv[1], header=True, inferSchema=True) \
+        .withColumn("TRADE_DATE", F.to_date("TRADE_DATE", "yyyyMMdd"))
 
-# select and rename columns
-df = df0.select(
-    "Member UUID",
-    "VANTAGE_V3_SCORE",
-    "TRADE_DATE"
-) \
-    .withColumnRenamed("Member UUID", "member_uuid") \
-    .withColumnRenamed("VANTAGE_V3_SCORE", "vantage_v3_score") \
-    .withColumnRenamed("TRADE_DATE", "trade_date")
+    # Select and rename columns
+    df = df0.select(
+        "Member UUID",
+        "VANTAGE_V3_SCORE",
+        "TRADE_DATE"
+    ) \
+        .withColumnRenamed("Member UUID", "member_uuid") \
+        .withColumnRenamed("VANTAGE_V3_SCORE", "vantage_v3_score") \
+        .withColumnRenamed("TRADE_DATE", "trade_date")
 
-df.printSchema()
+    df.printSchema()
 
-print("Writing credit score dataset as an Iceberg table...")
+    print("Writing credit score dataset as an Iceberg table...")
 
-df.write.format("iceberg") \
-    .mode("overwrite") \
-    .save("glue_catalog.data_lake_silver.credit_score_iceberg")
+    df.write.format("iceberg") \
+        .mode("overwrite") \
+        .save("glue_catalog.data_lake_silver.credit_score_iceberg")
 
-print("Checking if everything is ok")
+    print("Checking if everything is ok")
 
-spark.sql("SELECT * FROM glue_catalog.data_lake_silver.credit_score_iceberg where vantage_v3_score > 700;").show()
+    spark.sql("SELECT * FROM glue_catalog.data_lake_silver.credit_score_iceberg where vantage_v3_score > 700;").show()
+
+if __name__ == "__main__":
+    main(sys.argv)

@@ -14,7 +14,7 @@ resource "aws_glue_catalog_table" "credit_score_iceberg" {
   name          = "credit_score_iceberg"
   database_name = aws_glue_catalog_database.data_lake_silver.name
   parameters    = {
-    "metadata_location" = "s3://${aws_s3_bucket.mls_sandbox.id}/${var.data_lake_silver}/credit_score_iceberg/metadata/00000-436a1cc0-8a31-4abd-9e6d-e79cc9992315.metadata.json"
+    "metadata_location" = "s3://${aws_s3_bucket.mls_sandbox.id}/${var.data_lake_silver}/credit_score_iceberg/metadata/00001-4f05becf-2bce-4127-8825-0dc84a6a466a.metadata.json"
     "table_type"        = "ICEBERG"
     "format"            = "parquet"
   }

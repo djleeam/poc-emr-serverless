@@ -49,7 +49,8 @@ aws emr-serverless start-job-run \
     --job-driver '{
         "sparkSubmit": {
             "entryPoint": "s3://mls-sandbox/code/credit_score_delta.py",
-            "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.0.0"
+            "entryPointArguments": ["s3://mls-sandbox/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16.csv"],
+            "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.0.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
         }
     }' \
     --configuration-overrides '{
@@ -70,6 +71,7 @@ aws emr-serverless start-job-run \
     --job-driver '{
         "sparkSubmit": {
             "entryPoint": "s3://mls-sandbox/code/credit_score_iceberg.py",
+            "entryPointArguments": ["s3://mls-sandbox/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16.csv"],
             "sparkSubmitParameters": "--packages org.apache.iceberg:iceberg-spark-runtime-3.3_2.12:1.0.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
         }
     }' \
