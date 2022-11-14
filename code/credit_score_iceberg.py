@@ -21,6 +21,9 @@ def main(argv):
     df0 = spark.read.csv(argv[1], header=True, inferSchema=True) \
         .withColumn("TRADE_DATE", F.to_date("TRADE_DATE", "yyyyMMdd"))
 
+    print("Spark DataFrame shape...")
+    print((df0.count(), len(df0.columns)))
+
     # Select and rename columns
     df = df0.select(
         "Member UUID",

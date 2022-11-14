@@ -56,3 +56,11 @@ resource "aws_s3_object" "code_credit_score_iceberg" {
   source = "code/credit_score_iceberg.py"
   etag   = filemd5("code/credit_score_iceberg.py")
 }
+
+resource "aws_s3_object" "code_scrub_pii" {
+  bucket = aws_s3_bucket.mls_sandbox.id
+  key    = "code/scrub_pii.py"
+  acl    = "private"
+  source = "code/scrub_pii.py"
+  etag   = filemd5("code/scrub_pii.py")
+}

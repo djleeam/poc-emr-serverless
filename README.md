@@ -40,6 +40,27 @@ TBLPROPERTIES ('table_type' = 'ICEBERG');
 
 ## EMR Serverless
 
+### Submit Job: scrub_pii.py
+```
+aws emr-serverless start-job-run \
+    --name "Scrub PII" \
+    --application-id $APPLICATION_ID \
+    --execution-role-arn $JOB_ROLE_ARN \
+    --job-driver '{
+        "sparkSubmit": {
+            "entryPoint": "s3://mls-sandbox/code/scrub_pii.py",
+            "entryPointArguments": ["s3://mls-sandbox/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16.csv"]
+        }
+    }' \
+    --configuration-overrides '{
+        "monitoringConfiguration": {
+            "s3MonitoringConfiguration": {
+                "logUri": "s3://mls-sandbox/logs/emr_serverless"
+            }
+        }
+    }' --profile ntc.sand.1
+```
+
 ### Submit Job: credit_score_delta.py
 ```
 aws emr-serverless start-job-run \
@@ -49,7 +70,7 @@ aws emr-serverless start-job-run \
     --job-driver '{
         "sparkSubmit": {
             "entryPoint": "s3://mls-sandbox/code/credit_score_delta.py",
-            "entryPointArguments": ["s3://mls-sandbox/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16.csv"],
+            "entryPointArguments": ["s3://mls-sandbox/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16-nopii"],
             "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.0.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
         }
     }' \
@@ -71,7 +92,7 @@ aws emr-serverless start-job-run \
     --job-driver '{
         "sparkSubmit": {
             "entryPoint": "s3://mls-sandbox/code/credit_score_iceberg.py",
-            "entryPointArguments": ["s3://mls-sandbox/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16.csv"],
+            "entryPointArguments": ["s3://mls-sandbox/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16-nopii"],
             "sparkSubmitParameters": "--packages org.apache.iceberg:iceberg-spark-runtime-3.3_2.12:1.0.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
         }
     }' \
@@ -84,11 +105,10 @@ aws emr-serverless start-job-run \
     }' --profile ntc.sand.1
 ```
 
-
 ## Get Job stdout / stderr
 ```
-aws s3 cp s3://mls-sandbox/logs/emr_serverless/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stdout.gz - --profile ntc.sand.1 | gunzip
+aws s3 cp s3://mls-sandbox/logs/emr_serverless/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stdout.gz - --profile ntc.sand.1 | gunzip | less
 ```
 ```
-aws s3 cp s3://mls-sandbox/logs/emr_serverless/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stderr.gz - --profile ntc.sand.1 | gunzip
+aws s3 cp s3://mls-sandbox/logs/emr_serverless/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stderr.gz - --profile ntc.sand.1 | gunzip | less
 ```
