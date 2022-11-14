@@ -1,8 +1,9 @@
-# ntc-sandbox
+# POC: EMR Serverless
 
 This sandbox POC sets up the necessary roles and resources to allow the submission
 of EMR Serverless jobs that process Experian quest data and persist it into two
-data lake tables; one in the Delta Lake table format and the other in the Iceberg table format.
+data lake tables; one in the [Delta Lake](https://docs.delta.io/latest/delta-intro.html) table format and the other
+in the [Iceberg](https://iceberg.apache.org/docs/latest/) table format.
 
 Glue catalog tables are also created for each table respectively that then allows for the
 querying of the data lake data from Athena.
