@@ -12,9 +12,9 @@ variable "data_lake_silver" {
   default = "data-lake/silver"
 }
 
-#############################
-# Sandbox playground bucket
-#############################
+####################################
+# Sandbox playground bucket/objects
+####################################
 
 resource "aws_s3_bucket" "mls_sandbox" {
   bucket = "mls-sandbox"
@@ -29,6 +29,14 @@ resource "aws_s3_object" "logs" {
   key    = "logs/"
   acl    = "private"
   source = "/dev/null"
+}
+
+resource "aws_s3_object" "file_headers" {
+  bucket = aws_s3_bucket.mls_sandbox.id
+  key    = "data-lake/bronze/experian_quest/quest_files/2022/11/file_headers.csv"
+  acl    = "private"
+  source = "data/file_headers.csv"
+  etag   = filemd5("data/file_headers.csv")
 }
 
 #####################
