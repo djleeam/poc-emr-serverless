@@ -22,7 +22,7 @@ PARTITIONED BY (trade_date DATE)
 ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
 STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.SymlinkTextInputFormat'
 OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat' 
-LOCATION 's3://mls-sandbox/data-lake/silver/credit_score_delta/_symlink_format_manifest/';
+LOCATION 's3://${S3_BUCKET}/data-lake/silver/credit_score_delta/_symlink_format_manifest/';
 ```
 
 ### Create `credit_score_iceberg` table
@@ -32,13 +32,44 @@ CREATE TABLE IF NOT EXISTS glue_catalog.data_lake_silver.credit_score_iceberg (
     vantage_v3_score int,
     trade_date date)
 PARTITIONED BY (month(trade_date))
-LOCATION 's3://mls-sandbox/data-lake/silver/credit_score_iceberg'
+LOCATION 's3://${S3_BUCKET}/data-lake/silver/credit_score_iceberg'
 TBLPROPERTIES ('table_type' = 'ICEBERG');
 ```
 
 ## EMR Serverless
 
-### Submit Job: scrub_pii.py
+Make sure to set the following variables according to your environment and specific job run.
+
+```
+export S3_BUCKET=<YOUR_S3_BUCKET_NAME>
+export APPLICATION_ID=<EMR_SERVERLESS_APPLICATION_ID>
+export JOB_ROLE_ARN=<EMR_SERVERLESS_IAM_ROLE>
+export RDS_ENDPOINT=<RDS_ENDPOINT>
+```
+
+### Job: ge_profile.py
+```
+aws emr-serverless start-job-run \
+    --name "GE Profile" \
+    --application-id $APPLICATION_ID \
+    --execution-role-arn $JOB_ROLE_ARN \
+    --job-driver '{
+        "sparkSubmit": {
+            "entryPoint": "s3://'${S3_BUCKET}'/code/ge_profile.py",
+            "entryPointArguments": ["s3://'${S3_BUCKET}'/data-lake/bronze/nyc-tlc/green_tripdata_2020-04.parquet", "s3://'${S3_BUCKET}'/logs/ge-profile"],
+            "sparkSubmitParameters": "--conf spark.archives=s3://'${S3_BUCKET}'/artifacts/pyspark_venv.tar.gz#environment --conf spark.emr-serverless.driverEnv.PYSPARK_DRIVER_PYTHON=./environment/bin/python --conf spark.emr-serverless.driverEnv.PYSPARK_PYTHON=./environment/bin/python --conf spark.emr-serverless.executorEnv.PYSPARK_PYTHON=./environment/bin/python"
+        }
+    }' \
+    --configuration-overrides '{
+        "monitoringConfiguration": {
+            "s3MonitoringConfiguration": {
+                "logUri": "s3://'${S3_BUCKET}'/logs/emr_serverless"
+            }
+        }
+    }' --profile ntc.sand.1
+```
+
+### Job: scrub_pii.py
 ```
 aws emr-serverless start-job-run \
     --name "Scrub PII" \
@@ -46,20 +77,20 @@ aws emr-serverless start-job-run \
     --execution-role-arn $JOB_ROLE_ARN \
     --job-driver '{
         "sparkSubmit": {
-            "entryPoint": "s3://mls-sandbox/code/scrub_pii.py",
-            "entryPointArguments": ["s3://mls-sandbox/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16.csv"]
+            "entryPoint": "s3://'${S3_BUCKET}'/code/scrub_pii.py",
+            "entryPointArguments": ["s3://'${S3_BUCKET}'/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16.csv"]
         }
     }' \
     --configuration-overrides '{
         "monitoringConfiguration": {
             "s3MonitoringConfiguration": {
-                "logUri": "s3://mls-sandbox/logs/emr_serverless"
+                "logUri": "s3://'${S3_BUCKET}'/logs/emr_serverless"
             }
         }
     }' --profile ntc.sand.1
 ```
 
-### Submit Job: credit_score_delta.py
+### Job: credit_score_delta.py
 ```
 aws emr-serverless start-job-run \
     --name "Credit Score Delta Lake" \
@@ -67,21 +98,43 @@ aws emr-serverless start-job-run \
     --execution-role-arn $JOB_ROLE_ARN \
     --job-driver '{
         "sparkSubmit": {
-            "entryPoint": "s3://mls-sandbox/code/credit_score_delta.py",
-            "entryPointArguments": ["s3://mls-sandbox/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16-nopii"],
+            "entryPoint": "s3://'${S3_BUCKET}'/code/credit_score_delta.py",
+            "entryPointArguments": ["s3://'${S3_BUCKET}'/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16-nopii"],
             "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.0.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
         }
     }' \
     --configuration-overrides '{
         "monitoringConfiguration": {
             "s3MonitoringConfiguration": {
-                "logUri": "s3://mls-sandbox/logs/emr_serverless"
+                "logUri": "s3://'${S3_BUCKET}'/logs/emr_serverless"
             }
         }
     }' --profile ntc.sand.1
 ```
 
-### Submit Job: credit_score_iceberg.py
+### Job: credit_score_delta_to_postgres.py
+```
+aws emr-serverless start-job-run \
+    --name "Credit Score Delta to Postgres" \
+    --application-id $APPLICATION_ID \
+    --execution-role-arn $JOB_ROLE_ARN \
+    --job-driver '{
+        "sparkSubmit": {
+            "entryPoint": "s3://'${S3_BUCKET}'/code/credit_score_delta_to_postgres.py",
+            "entryPointArguments": ["'${RDS_ENDPOINT}'"],
+            "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.0.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
+        }
+    }' \
+    --configuration-overrides '{
+        "monitoringConfiguration": {
+            "s3MonitoringConfiguration": {
+                "logUri": "s3://'${S3_BUCKET}'/logs/emr_serverless"
+            }
+        }
+    }' --profile ntc.sand.1
+```
+
+### Job: credit_score_iceberg.py
 ```
 aws emr-serverless start-job-run \
     --name "Credit Score Iceberg" \
@@ -89,15 +142,15 @@ aws emr-serverless start-job-run \
     --execution-role-arn $JOB_ROLE_ARN \
     --job-driver '{
         "sparkSubmit": {
-            "entryPoint": "s3://mls-sandbox/code/credit_score_iceberg.py",
-            "entryPointArguments": ["s3://mls-sandbox/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16-nopii"],
+            "entryPoint": "s3://'${S3_BUCKET}'/code/credit_score_iceberg.py",
+            "entryPointArguments": ["s3://'${S3_BUCKET}'/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16-nopii"],
             "sparkSubmitParameters": "--packages org.apache.iceberg:iceberg-spark-runtime-3.3_2.12:1.0.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
         }
     }' \
     --configuration-overrides '{
         "monitoringConfiguration": {
             "s3MonitoringConfiguration": {
-                "logUri": "s3://mls-sandbox/logs/emr_serverless"
+                "logUri": "s3://'${S3_BUCKET}'/logs/emr_serverless"
             }
         }
     }' --profile ntc.sand.1
@@ -105,10 +158,10 @@ aws emr-serverless start-job-run \
 
 ## Get job stdout
 ```
-aws s3 cp s3://mls-sandbox/logs/emr_serverless/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stdout.gz - --profile ntc.sand.1 | gunzip | less
+aws s3 cp s3://${S3_BUCKET}/logs/emr_serverless/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stdout.gz - --profile ntc.sand.1 | gunzip | less
 ```
 
 ## Get job stderr
 ```
-aws s3 cp s3://mls-sandbox/logs/emr_serverless/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stderr.gz - --profile ntc.sand.1 | gunzip | less
+aws s3 cp s3://${S3_BUCKET}/logs/emr_serverless/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stderr.gz - --profile ntc.sand.1 | gunzip | less
 ```

@@ -31,7 +31,11 @@ resource "aws_s3_object" "logs" {
   source = "/dev/null"
 }
 
-resource "aws_s3_object" "file_headers" {
+############################
+# Setup source data
+############################
+
+resource "aws_s3_object" "data_file_headers" {
   bucket = aws_s3_bucket.mls_sandbox.id
   key    = "data-lake/bronze/experian_quest/quest_files/2022/11/file_headers.csv"
   acl    = "private"
@@ -39,8 +43,28 @@ resource "aws_s3_object" "file_headers" {
   etag   = filemd5("data/file_headers.csv")
 }
 
+resource "aws_s3_object" "data_green_tripdata" {
+  bucket = aws_s3_bucket.mls_sandbox.id
+  key    = "data-lake/bronze/nyc-tlc/green_tripdata_2020-04.parquet"
+  acl    = "private"
+  source = "data/green_tripdata_2020-04.parquet"
+  etag   = filemd5("data/green_tripdata_2020-04.parquet")
+}
+
 #####################
-# Upload Spark code
+# PySpark artifacts
+#####################
+
+#resource "aws_s3_object" "artifacts_pyspark_venv" {
+#  bucket = aws_s3_bucket.mls_sandbox.id
+#  key    = "artifacts/pyspark_venv.tar.gz"
+#  acl    = "private"
+#  source = "artifacts/pyspark_venv.tar.gz"
+#  etag   = filemd5("artifacts/pyspark_venv.tar.gz")
+#}
+
+#####################
+# PySpark resources
 #####################
 
 resource "aws_s3_object" "code_credit_score_delta" {
@@ -49,6 +73,22 @@ resource "aws_s3_object" "code_credit_score_delta" {
   acl    = "private"
   source = "code/credit_score_delta.py"
   etag   = filemd5("code/credit_score_delta.py")
+}
+
+resource "aws_s3_object" "code_credit_score_delta_to_postgres" {
+  bucket = aws_s3_bucket.mls_sandbox.id
+  key    = "code/credit_score_delta_to_postgres.py"
+  acl    = "private"
+  source = "code/credit_score_delta_to_postgres.py"
+  etag   = filemd5("code/credit_score_delta_to_postgres.py")
+}
+
+resource "aws_s3_object" "code_ge_profile" {
+  bucket = aws_s3_bucket.mls_sandbox.id
+  key    = "code/ge_profile.py"
+  acl    = "private"
+  source = "code/ge_profile.py"
+  etag   = filemd5("code/ge_profile.py")
 }
 
 resource "aws_s3_object" "code_credit_score_iceberg" {

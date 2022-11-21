@@ -26,7 +26,6 @@ def main(argv):
     # df_t.limit(0).write.mode("overwrite").format("delta").save(f'{BUCKET_SILVER}/{TABLE_NAME}')
 
     # Read new data passed in via argv
-    # i.e. s3://mls-sandbox/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16.csv
     df0 = spark.read.csv(argv[1], header=True, inferSchema=True) \
         .withColumn("TRADE_DATE", F.to_date("TRADE_DATE", "yyyyMMdd"))
 

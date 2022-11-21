@@ -17,7 +17,6 @@ def main(argv):
     print("Reading CSV file from S3...")
 
     # Read new data passed in via argv
-    # i.e. s3://mls-sandbox/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16.csv
     df0 = spark.read.csv(argv[1], header=True, inferSchema=True) \
         .withColumn("TRADE_DATE", F.to_date("TRADE_DATE", "yyyyMMdd"))
 
