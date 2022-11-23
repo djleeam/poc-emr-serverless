@@ -8,10 +8,10 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 RUN python3 -m pip install --upgrade pip && \
     python3 -m pip install \
-    great_expectations==0.15.6 \
-    venv-pack==0.2.0
+    venv-pack==0.2.0 \
+    great_expectations==0.15.6
 
-RUN mkdir /output && venv-pack -o /output/pyspark_venv.tar.gz
+RUN mkdir /output && venv-pack -o /output/pyspark_ge.tar.gz
 
 FROM scratch AS export
-COPY --from=base /output/pyspark_venv.tar.gz /
+COPY --from=base /output/pyspark_ge.tar.gz /

@@ -36,6 +36,7 @@ resource "aws_emrserverless_application" "credit_score_app" {
   maximum_capacity {
     cpu    = "100 vCPU"
     memory = "200 GB"
+    disk   = "400 GB"
   }
 
   network_configuration {
@@ -67,6 +68,17 @@ data "aws_subnets" "private" {
 
   tags = {
     SubnetType = "private"
+  }
+}
+
+data "aws_subnets" "public" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.ntc_sand.id]
+  }
+
+  tags = {
+    SubnetType = "public"
   }
 }
 

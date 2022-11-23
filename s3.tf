@@ -55,13 +55,21 @@ resource "aws_s3_object" "data_green_tripdata" {
 # PySpark artifacts
 #####################
 
-#resource "aws_s3_object" "artifacts_pyspark_venv" {
+#resource "aws_s3_object" "artifacts_pyspark_ge" {
 #  bucket = aws_s3_bucket.mls_sandbox.id
-#  key    = "artifacts/pyspark_venv.tar.gz"
+#  key    = "artifacts/pyspark_ge.tar.gz"
 #  acl    = "private"
-#  source = "artifacts/pyspark_venv.tar.gz"
-#  etag   = filemd5("artifacts/pyspark_venv.tar.gz")
+#  source = "artifacts/pyspark_ge.tar.gz"
+#  etag   = filemd5("artifacts/pyspark_ge.tar.gz")
 #}
+
+resource "aws_s3_object" "artifacts_pyspark_db" {
+  bucket = aws_s3_bucket.mls_sandbox.id
+  key    = "artifacts/pyspark_db.tar.gz"
+  acl    = "private"
+  source = "artifacts/pyspark_db.tar.gz"
+  etag   = filemd5("artifacts/pyspark_db.tar.gz")
+}
 
 #####################
 # PySpark resources

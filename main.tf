@@ -124,7 +124,7 @@ resource "aws_iam_policy" "rds_access_rw" {
              "rds-db:connect"
          ],
          "Resource": [
-             "arn:aws:rds-db:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:dbuser:${aws_db_instance.creditscore.resource_id}/cs_user"
+             "arn:aws:rds-db:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:dbuser:${aws_db_instance.creditscore.resource_id}/emr_job"
          ]
       }
    ]

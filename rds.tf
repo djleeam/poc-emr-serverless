@@ -16,7 +16,7 @@ resource "aws_db_instance" "creditscore" {
   backup_window                       = "06:55-07:25"
   ca_cert_identifier                  = "rds-ca-2019"
   db_name                             = "creditscore"
-  db_subnet_group_name                = "public-db-subnet-grp"
+  db_subnet_group_name                = aws_db_subnet_group.public.name
   deletion_protection                 = false
   engine                              = "postgres"
   engine_version                      = "13.7"
@@ -43,6 +43,20 @@ resource "aws_db_instance" "creditscore" {
 }
 
 ##############################
+# RDS DB subnet group
+##############################
+
+resource "aws_db_subnet_group" "public" {
+  name       = "public-db-subnet-grp"
+  subnet_ids = data.aws_subnets.public.ids
+}
+
+resource "aws_db_subnet_group" "private" {
+  name       = "private-db-subnet-grp"
+  subnet_ids = data.aws_subnets.private.ids
+}
+
+##############################
 # VPC security group for RDS
 ##############################
 
@@ -59,9 +73,23 @@ resource "aws_security_group" "rds_creditscore_sg" {
   }
 
   ingress {
+    description = "from my local network"
     cidr_blocks = ["${chomp(data.http.myip.response_body)}/32"]
     from_port   = 5432
     protocol    = "tcp"
     to_port     = 5432
   }
+
+  ingress {
+    description = "from private subnets (where EMR Serverless is running)"
+    cidr_blocks = [
+      "10.2.64.0/24",
+      "10.2.65.0/24",
+      "10.2.66.0/24"
+    ]
+    from_port = 5432
+    protocol  = "tcp"
+    to_port   = 5432
+  }
+
 }

@@ -38,6 +38,21 @@ TBLPROPERTIES ('table_type' = 'ICEBERG');
 
 ## EMR Serverless
 
+### Build a virtualenv archive for dependencies
+
+All the commands below should be executed in the `/artifacts` directory. The command builds the included Dockerfile
+and exports the resulting Python virtualenv file to your local filesystem.
+
+```
+# Build python venv with `great_expectations` deps
+DOCKER_BUILDKIT=1 docker build -f Dockerfile-ge --output . .
+
+# Build python venv with DB deps
+DOCKER_BUILDKIT=1 docker build -f Dockerfile-db --output . .
+```
+
+### Setting environment vars for job runs
+
 Make sure to set the following variables according to your environment and specific job run.
 
 ```
@@ -45,6 +60,21 @@ export S3_BUCKET=<YOUR_S3_BUCKET_NAME>
 export APPLICATION_ID=<EMR_SERVERLESS_APPLICATION_ID>
 export JOB_ROLE_ARN=<EMR_SERVERLESS_IAM_ROLE>
 export RDS_ENDPOINT=<RDS_ENDPOINT>
+```
+
+### Creating necessary tables and roles for RDS related jobs
+
+Make sure to create the following table/user/grant for the RDS role-based IAM access to work.
+
+```
+CREATE TABLE credit_score_delta (
+    member_uuid VARCHAR,
+    vantage_v3_score INT,
+    trade_date DATE
+);
+
+CREATE USER emr_job WITH LOGIN;
+GRANT rds_iam to emr_job;
 ```
 
 ### Job: ge_profile.py
@@ -57,7 +87,7 @@ aws emr-serverless start-job-run \
         "sparkSubmit": {
             "entryPoint": "s3://'${S3_BUCKET}'/code/ge_profile.py",
             "entryPointArguments": ["s3://'${S3_BUCKET}'/data-lake/bronze/nyc-tlc/green_tripdata_2020-04.parquet", "s3://'${S3_BUCKET}'/logs/ge-profile"],
-            "sparkSubmitParameters": "--conf spark.archives=s3://'${S3_BUCKET}'/artifacts/pyspark_venv.tar.gz#environment --conf spark.emr-serverless.driverEnv.PYSPARK_DRIVER_PYTHON=./environment/bin/python --conf spark.emr-serverless.driverEnv.PYSPARK_PYTHON=./environment/bin/python --conf spark.emr-serverless.executorEnv.PYSPARK_PYTHON=./environment/bin/python"
+            "sparkSubmitParameters": "--conf spark.archives=s3://'${S3_BUCKET}'/artifacts/pyspark_ge.tar.gz#environment --conf spark.emr-serverless.driverEnv.PYSPARK_DRIVER_PYTHON=./environment/bin/python --conf spark.emr-serverless.driverEnv.PYSPARK_PYTHON=./environment/bin/python --conf spark.emr-serverless.executorEnv.PYSPARK_PYTHON=./environment/bin/python"
         }
     }' \
     --configuration-overrides '{
@@ -122,7 +152,7 @@ aws emr-serverless start-job-run \
         "sparkSubmit": {
             "entryPoint": "s3://'${S3_BUCKET}'/code/credit_score_delta_to_postgres.py",
             "entryPointArguments": ["'${RDS_ENDPOINT}'"],
-            "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.0.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
+            "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.0.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11 --conf spark.archives=s3://'${S3_BUCKET}'/artifacts/pyspark_db.tar.gz#environment --conf spark.emr-serverless.driverEnv.PYSPARK_DRIVER_PYTHON=./environment/bin/python --conf spark.emr-serverless.driverEnv.PYSPARK_PYTHON=./environment/bin/python --conf spark.emr-serverless.executorEnv.PYSPARK_PYTHON=./environment/bin/python"
         }
     }' \
     --configuration-overrides '{
