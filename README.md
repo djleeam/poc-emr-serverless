@@ -130,7 +130,7 @@ aws emr-serverless start-job-run \
         "sparkSubmit": {
             "entryPoint": "s3://'${S3_BUCKET}'/code/credit_score_delta.py",
             "entryPointArguments": ["s3://'${S3_BUCKET}'/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16-nopii"],
-            "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.0.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
+            "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.1.1,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
         }
     }' \
     --configuration-overrides '{

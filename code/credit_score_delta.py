@@ -10,13 +10,15 @@ spark = (
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
     .config("spark.sql.catalog.glue_catalog.warehouse", "s3://mls-sandbox/data-lake/silver/")
-    .config("hive.metastore.client.factory.class", "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory")
+    .config("hive.metastore.client.factory.class",
+            "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory")
     .enableHiveSupport()
     .getOrCreate()
 )
 
-BUCKET_SILVER = "s3a://mls-sandbox/data-lake/silver/"
+BUCKET_SILVER = "s3a://mls-sandbox/data-lake/silver"
 TABLE_NAME = "credit_score_delta"
+
 
 def main(argv):
     print("Reading CSV file from S3...")
@@ -44,6 +46,13 @@ def main(argv):
 
     df.printSchema()
 
+    # Create delta table if it does not exist
+    DeltaTable.createIfNotExists(spark) \
+        .location(f'{BUCKET_SILVER}/{TABLE_NAME}') \
+        .addColumns(df.schema) \
+        .partitionedBy("trade_date") \
+        .execute()
+
     print("Merge new credit score data to Delta table...")
 
     credit_score_delta_tbl = DeltaTable.forPath(spark, f'{BUCKET_SILVER}/{TABLE_NAME}')
@@ -51,25 +60,25 @@ def main(argv):
     # Perform merge into Delta table with new data
     # https://docs.databricks.com/delta/merge.html#merge-operation-semantics
     credit_score_delta_tbl.alias('scores') \
-    .merge(
+        .merge(
         df.alias('new_scores'),
         'scores.member_uuid = new_scores.member_uuid AND scores.trade_date = new_scores.trade_date'
     ) \
-    .whenMatchedUpdate(set=
-        {
-            "member_uuid": "new_scores.member_uuid",
-            "trade_date": "new_scores.trade_date",
-            "vantage_v3_score": "new_scores.vantage_v3_score"
-        }
+        .whenMatchedUpdate(set=
+    {
+        "member_uuid": "new_scores.member_uuid",
+        "trade_date": "new_scores.trade_date",
+        "vantage_v3_score": "new_scores.vantage_v3_score"
+    }
     ) \
-    .whenNotMatchedInsert(values=
-        {
-            "member_uuid": "new_scores.member_uuid",
-            "trade_date": "new_scores.trade_date",
-            "vantage_v3_score": "new_scores.vantage_v3_score"
-        }
+        .whenNotMatchedInsert(values=
+    {
+        "member_uuid": "new_scores.member_uuid",
+        "trade_date": "new_scores.trade_date",
+        "vantage_v3_score": "new_scores.vantage_v3_score"
+    }
     ) \
-    .execute()
+        .execute()
 
     # Update manifest
     credit_score_delta_tbl.generate("symlink_format_manifest")
@@ -87,6 +96,7 @@ def main(argv):
 
     # Or we can also them with native Spark code
     print(spark.catalog.listTables())
+
 
 if __name__ == "__main__":
     main(sys.argv)
