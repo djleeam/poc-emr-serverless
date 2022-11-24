@@ -6,6 +6,7 @@ spark = (
     SparkSession.builder.getOrCreate()
 )
 
+
 def main(argv):
     print("Reading CSV file from S3...")
 
@@ -28,6 +29,7 @@ def main(argv):
     df.printSchema()
 
     df.write.option("header", "true").csv(argv[1].replace(".csv", "-nopii"))
+
 
 if __name__ == "__main__":
     main(sys.argv)

@@ -26,13 +26,18 @@ spark = (
 
 def main(argv):
     db_endpoint = argv[1]
+    trade_date = argv[2]
 
     client = boto3.client('rds', region_name=REGION)
     token = client.generate_db_auth_token(db_endpoint, DB_PORT, DB_USER)
 
     print(f"DB auth token: {token}")
 
-    df = spark.read.format("delta").load(f'{BUCKET_SILVER}/{TABLE_NAME}')
+    df = spark.read.format("delta") \
+        .load(f'{BUCKET_SILVER}/{TABLE_NAME}') \
+        .where(f"trade_date = '{trade_date}'")
+
+    df.show()
 
     df.write.format('jdbc').options(
         url=f"jdbc:postgresql://{db_endpoint}:{DB_PORT}/{DB_NAME}",

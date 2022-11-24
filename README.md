@@ -81,7 +81,7 @@ ALTER TABLE public.credit_score_delta OWNER TO emr_job;
 
 ### Job: ge_profile.py
 ```
-aws emr-serverless start-job-run \
+JOB_RUN_ID=`aws emr-serverless start-job-run \
     --name "GE Profile" \
     --application-id $APPLICATION_ID \
     --execution-role-arn $JOB_ROLE_ARN \
@@ -98,12 +98,12 @@ aws emr-serverless start-job-run \
                 "logUri": "s3://'${S3_BUCKET}'/logs/emr_serverless"
             }
         }
-    }' --profile ntc.sand.1
+    }' --profile ntc.sand.1 | jq -r '.jobRunId?'` && export JOB_RUN_ID
 ```
 
 ### Job: scrub_pii.py
 ```
-aws emr-serverless start-job-run \
+JOB_RUN_ID=`aws emr-serverless start-job-run \
     --name "Scrub PII" \
     --application-id $APPLICATION_ID \
     --execution-role-arn $JOB_ROLE_ARN \
@@ -119,12 +119,12 @@ aws emr-serverless start-job-run \
                 "logUri": "s3://'${S3_BUCKET}'/logs/emr_serverless"
             }
         }
-    }' --profile ntc.sand.1
+    }' --profile ntc.sand.1 | jq -r '.jobRunId?'` && export JOB_RUN_ID
 ```
 
 ### Job: credit_score_delta.py
 ```
-aws emr-serverless start-job-run \
+JOB_RUN_ID=`aws emr-serverless start-job-run \
     --name "Credit Score Delta Lake" \
     --application-id $APPLICATION_ID \
     --execution-role-arn $JOB_ROLE_ARN \
@@ -141,19 +141,19 @@ aws emr-serverless start-job-run \
                 "logUri": "s3://'${S3_BUCKET}'/logs/emr_serverless"
             }
         }
-    }' --profile ntc.sand.1
+    }' --profile ntc.sand.1 | jq -r '.jobRunId?'` && export JOB_RUN_ID
 ```
 
 ### Job: credit_score_delta_to_postgres.py
 ```
-aws emr-serverless start-job-run \
+JOB_RUN_ID=`aws emr-serverless start-job-run \
     --name "Credit Score Delta to Postgres" \
     --application-id $APPLICATION_ID \
     --execution-role-arn $JOB_ROLE_ARN \
     --job-driver '{
         "sparkSubmit": {
             "entryPoint": "s3://'${S3_BUCKET}'/code/credit_score_delta_to_postgres.py",
-            "entryPointArguments": ["'${RDS_ENDPOINT}'"],
+            "entryPointArguments": ["'${RDS_ENDPOINT}'", "2022-10-12"],
             "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.1.1,org.postgresql:postgresql:42.5.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
         }
     }' \
@@ -163,12 +163,12 @@ aws emr-serverless start-job-run \
                 "logUri": "s3://'${S3_BUCKET}'/logs/emr_serverless"
             }
         }
-    }' --profile ntc.sand.1
+    }' --profile ntc.sand.1 | jq -r '.jobRunId?'` && export JOB_RUN_ID
 ```
 
 ### Job: credit_score_iceberg.py
 ```
-aws emr-serverless start-job-run \
+JOB_RUN_ID=`aws emr-serverless start-job-run \
     --name "Credit Score Iceberg" \
     --application-id $APPLICATION_ID \
     --execution-role-arn $JOB_ROLE_ARN \
@@ -185,7 +185,7 @@ aws emr-serverless start-job-run \
                 "logUri": "s3://'${S3_BUCKET}'/logs/emr_serverless"
             }
         }
-    }' --profile ntc.sand.1
+    }' --profile ntc.sand.1 | jq -r '.jobRunId?'` && export JOB_RUN_ID
 ```
 
 ## Get job stdout

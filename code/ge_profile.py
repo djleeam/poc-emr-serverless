@@ -33,5 +33,6 @@ def main(argv):
     html = DefaultJinjaPageView().render(document_model)
     spark.sparkContext.parallelize([html]).coalesce(1).saveAsTextFile(f"{argv[2]}/{datetime.datetime.now()}")
 
+
 if __name__ == "__main__":
     main(sys.argv)
