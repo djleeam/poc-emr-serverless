@@ -9,9 +9,11 @@ spark = (
     .config("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
     .config("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
     .config("spark.sql.catalog.glue_catalog.warehouse", "s3://mls-sandbox/data-lake/silver/")
-    .config("hive.metastore.client.factory.class", "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory")
+    .config("hive.metastore.client.factory.class",
+            "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory")
     .getOrCreate()
 )
+
 
 def main(argv):
     print("Reading CSV file from S3...")
@@ -44,6 +46,7 @@ def main(argv):
     print("Checking if everything is ok")
 
     spark.sql("SELECT * FROM glue_catalog.data_lake_silver.credit_score_iceberg where vantage_v3_score > 700;").show()
+
 
 if __name__ == "__main__":
     main(sys.argv)

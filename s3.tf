@@ -63,14 +63,6 @@ resource "aws_s3_object" "data_green_tripdata" {
 #  etag   = filemd5("artifacts/pyspark_ge.tar.gz")
 #}
 
-resource "aws_s3_object" "artifacts_pyspark_db" {
-  bucket = aws_s3_bucket.mls_sandbox.id
-  key    = "artifacts/pyspark_db.tar.gz"
-  acl    = "private"
-  source = "artifacts/pyspark_db.tar.gz"
-  etag   = filemd5("artifacts/pyspark_db.tar.gz")
-}
-
 #####################
 # PySpark resources
 #####################

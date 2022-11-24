@@ -64,7 +64,7 @@ export RDS_ENDPOINT=<RDS_ENDPOINT>
 
 ### Creating necessary tables and roles for RDS related jobs
 
-Make sure to create the following table/user/grant for the RDS role-based IAM access to work.
+Make sure to create the following table/user/grants for the RDS role-based IAM access to work.
 
 ```
 CREATE TABLE credit_score_delta (
@@ -75,6 +75,8 @@ CREATE TABLE credit_score_delta (
 
 CREATE USER emr_job WITH LOGIN;
 GRANT rds_iam to emr_job;
+GRANT ALL ON TABLE public.credit_score_delta TO emr_job;
+ALTER TABLE public.credit_score_delta OWNER TO emr_job;
 ```
 
 ### Job: ge_profile.py
@@ -152,7 +154,7 @@ aws emr-serverless start-job-run \
         "sparkSubmit": {
             "entryPoint": "s3://'${S3_BUCKET}'/code/credit_score_delta_to_postgres.py",
             "entryPointArguments": ["'${RDS_ENDPOINT}'"],
-            "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.0.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11 --conf spark.archives=s3://'${S3_BUCKET}'/artifacts/pyspark_db.tar.gz#environment --conf spark.emr-serverless.driverEnv.PYSPARK_DRIVER_PYTHON=./environment/bin/python --conf spark.emr-serverless.driverEnv.PYSPARK_PYTHON=./environment/bin/python --conf spark.emr-serverless.executorEnv.PYSPARK_PYTHON=./environment/bin/python"
+            "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.1.1,org.postgresql:postgresql:42.5.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
         }
     }' \
     --configuration-overrides '{

@@ -1,8 +1,6 @@
 import sys
 
 import boto3
-import certifi
-import psycopg2
 from pyspark.sql import SparkSession
 
 REGION = "us-east-2"
@@ -10,7 +8,7 @@ DB_NAME = "postgres"
 DB_PORT = 5432
 DB_USER = "emr_job"
 
-BUCKET_SILVER = "s3a://mls-sandbox/data-lake/silver/"
+BUCKET_SILVER = "s3a://mls-sandbox/data-lake/silver"
 TABLE_NAME = "credit_score_delta"
 
 spark = (
@@ -34,24 +32,15 @@ def main(argv):
 
     print(f"DB auth token: {token}")
 
-    try:
-        conn = psycopg2.connect(
-            host=db_endpoint,
-            port=DB_PORT,
-            database=DB_NAME,
-            user=DB_USER,
-            password=token,
-            sslmode="verify-ca",
-            sslrootcert=certifi.where()
-        )
-        cur = conn.cursor()
-        cur.execute("""SELECT now()""")
-        query_results = cur.fetchall()
-        print(query_results)
-    except Exception as e:
-        print("Database connection failed due to {}".format(e))
+    df = spark.read.format("delta").load(f'{BUCKET_SILVER}/{TABLE_NAME}')
 
-    # df = spark.read.format("delta").load(f'{BUCKET_SILVER}/{TABLE_NAME}')
+    df.write.format('jdbc').options(
+        url=f"jdbc:postgresql://{db_endpoint}:{DB_PORT}/{DB_NAME}",
+        driver="org.postgresql.Driver",
+        dbtable=TABLE_NAME,
+        user=DB_USER,
+        password=token
+    ).mode("overwrite").save()
 
 
 if __name__ == "__main__":
