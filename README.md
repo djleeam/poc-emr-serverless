@@ -72,6 +72,7 @@ CREATE TABLE credit_score_delta (
     vantage_v3_score INT,
     trade_date DATE
 );
+CREATE UNIQUE INDEX credit_score_delta_member_uuid_idx ON public.credit_score_delta USING btree (member_uuid, trade_date);
 
 CREATE USER emr_job WITH LOGIN;
 GRANT rds_iam to emr_job;
@@ -110,7 +111,7 @@ JOB_RUN_ID=`aws emr-serverless start-job-run \
     --job-driver '{
         "sparkSubmit": {
             "entryPoint": "s3://'${S3_BUCKET}'/code/scrub_pii.py",
-            "entryPointArguments": ["s3://'${S3_BUCKET}'/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16.csv"]
+            "entryPointArguments": ["s3://'${S3_BUCKET}'/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-12.csv"]
         }
     }' \
     --configuration-overrides '{
@@ -131,7 +132,7 @@ JOB_RUN_ID=`aws emr-serverless start-job-run \
     --job-driver '{
         "sparkSubmit": {
             "entryPoint": "s3://'${S3_BUCKET}'/code/credit_score_delta.py",
-            "entryPointArguments": ["s3://'${S3_BUCKET}'/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16-nopii"],
+            "entryPointArguments": ["s3://'${S3_BUCKET}'/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-12-nopii"],
             "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.1.1,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
         }
     }' \
@@ -154,7 +155,7 @@ JOB_RUN_ID=`aws emr-serverless start-job-run \
         "sparkSubmit": {
             "entryPoint": "s3://'${S3_BUCKET}'/code/credit_score_delta_to_postgres.py",
             "entryPointArguments": ["'${RDS_ENDPOINT}'", "2022-10-12"],
-            "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.1.1,org.postgresql:postgresql:42.5.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
+            "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.1.1,org.postgresql:postgresql:42.5.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11 --conf spark.archives=s3://'${S3_BUCKET}'/artifacts/pyspark_db.tar.gz#environment --conf spark.emr-serverless.driverEnv.PYSPARK_DRIVER_PYTHON=./environment/bin/python --conf spark.emr-serverless.driverEnv.PYSPARK_PYTHON=./environment/bin/python --conf spark.emr-serverless.executorEnv.PYSPARK_PYTHON=./environment/bin/python"
         }
     }' \
     --configuration-overrides '{
@@ -175,7 +176,7 @@ JOB_RUN_ID=`aws emr-serverless start-job-run \
     --job-driver '{
         "sparkSubmit": {
             "entryPoint": "s3://'${S3_BUCKET}'/code/credit_score_iceberg.py",
-            "entryPointArguments": ["s3://'${S3_BUCKET}'/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-16-nopii"],
+            "entryPointArguments": ["s3://'${S3_BUCKET}'/data-lake/bronze/experian_quest/quest_files/2022/10/experian-2022-10-12-nopii"],
             "sparkSubmitParameters": "--packages org.apache.iceberg:iceberg-spark-runtime-3.3_2.12:1.0.0,software.amazon.awssdk:bundle:2.18.11,software.amazon.awssdk:url-connection-client:2.18.11"
         }
     }' \
