@@ -26,6 +26,7 @@ resource "aws_db_instance" "creditscore" {
   license_model                       = "postgresql-license"
   maintenance_window                  = "mon:08:12-mon:08:42"
   max_allocated_storage               = 0
+  monitoring_interval                 = 60
   multi_az                            = false
   skip_final_snapshot                 = true
   storage_type                        = "gp2"
@@ -60,6 +61,11 @@ resource "aws_db_subnet_group" "private" {
 # VPC security group for RDS
 ##############################
 
+data "aws_subnet" "rds_subnets" {
+  for_each = toset(data.aws_subnets.private.ids)
+  id       = each.value
+}
+
 resource "aws_security_group" "rds_creditscore_sg" {
   description = "Allow postgres access"
   name        = "rds-creditscore-sg"
@@ -82,14 +88,10 @@ resource "aws_security_group" "rds_creditscore_sg" {
 
   ingress {
     description = "from private subnets (where EMR Serverless is running)"
-    cidr_blocks = [
-      "10.2.64.0/24",
-      "10.2.65.0/24",
-      "10.2.66.0/24"
-    ]
-    from_port = 5432
-    protocol  = "tcp"
-    to_port   = 5432
+    cidr_blocks = [for s in data.aws_subnet.rds_subnets : s.cidr_block]
+    from_port   = 5432
+    protocol    = "tcp"
+    to_port     = 5432
   }
 
 }
