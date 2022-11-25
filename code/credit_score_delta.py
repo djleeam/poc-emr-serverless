@@ -4,23 +4,24 @@ from delta.tables import *
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
+DATA_SRC = sys.argv[1]
+DATA_DST = sys.argv[2]
+TABLE_NAME = "credit_score_delta"
+
 spark = (
     SparkSession.builder
     .config("spark.jars.packages", "io.delta:delta-core_2.12:2.0.0")
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-    .config("spark.sql.catalog.glue_catalog.warehouse", "s3://mls-sandbox/data-lake/silver/")
+    .config("spark.sql.catalog.glue_catalog.warehouse", DATA_DST)
     .config("hive.metastore.client.factory.class",
             "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory")
     .enableHiveSupport()
     .getOrCreate()
 )
 
-BUCKET_SILVER = "s3a://mls-sandbox/data-lake/silver"
-TABLE_NAME = "credit_score_delta"
 
-
-def main(argv):
+def main():
     print("Reading CSV file from S3...")
 
     # Truncate table (optional)
@@ -28,7 +29,7 @@ def main(argv):
     # df_t.limit(0).write.mode("overwrite").format("delta").save(f'{BUCKET_SILVER}/{TABLE_NAME}')
 
     # Read new data passed in via argv
-    df0 = spark.read.csv(argv[1], header=True, inferSchema=True) \
+    df0 = spark.read.csv(DATA_SRC, header=True, inferSchema=True) \
         .withColumn("TRADE_DATE", F.to_date("TRADE_DATE", "yyyyMMdd"))
 
     print("Spark DataFrame shape...")
@@ -46,16 +47,16 @@ def main(argv):
 
     df.printSchema()
 
-    # Create delta table if it does not exist
+    # Create Delta table if it does not exist
     DeltaTable.createIfNotExists(spark) \
-        .location(f'{BUCKET_SILVER}/{TABLE_NAME}') \
+        .location(f'{DATA_DST}/{TABLE_NAME}') \
         .addColumns(df.schema) \
         .partitionedBy("trade_date") \
         .execute()
 
     print("Merge new credit score data to Delta table...")
 
-    credit_score_delta_tbl = DeltaTable.forPath(spark, f'{BUCKET_SILVER}/{TABLE_NAME}')
+    credit_score_delta_tbl = DeltaTable.forPath(spark, f'{DATA_DST}/{TABLE_NAME}')
 
     # Perform merge into Delta table with new data
     # https://docs.databricks.com/delta/merge.html#merge-operation-semantics
@@ -86,7 +87,7 @@ def main(argv):
     print("Row counts after merge...")
     (
         spark.read.format("delta")
-        .load(f'{BUCKET_SILVER}/{TABLE_NAME}')
+        .load(f'{DATA_DST}/{TABLE_NAME}')
         .agg(F.count("*"))
         .show()
     )
@@ -99,4 +100,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()

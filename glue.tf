@@ -6,60 +6,6 @@ resource "aws_glue_catalog_database" "data_lake_silver" {
   name = "data_lake_silver"
 }
 
-#######################################
-# Credit Score (Iceberg table format)
-#######################################
-
-resource "aws_glue_catalog_table" "credit_score_iceberg" {
-  name          = "credit_score_iceberg"
-  database_name = aws_glue_catalog_database.data_lake_silver.name
-  parameters = {
-    "metadata_location" = "s3://${aws_s3_bucket.mls_sandbox.id}/${var.data_lake_silver}/credit_score_iceberg/metadata/00001-4f05becf-2bce-4127-8825-0dc84a6a466a.metadata.json"
-    "table_type"        = "ICEBERG"
-    "format"            = "parquet"
-  }
-  table_type = "EXTERNAL_TABLE"
-
-  storage_descriptor {
-    bucket_columns            = []
-    compressed                = false
-    location                  = "s3://${aws_s3_bucket.mls_sandbox.id}/${var.data_lake_silver}/credit_score_iceberg"
-    number_of_buckets         = 0
-    parameters                = {}
-    stored_as_sub_directories = false
-
-    columns {
-      name = "member_uuid"
-      parameters = {
-        "iceberg.field.current"  = "true"
-        "iceberg.field.id"       = "1"
-        "iceberg.field.optional" = "true"
-      }
-      type = "string"
-    }
-
-    columns {
-      name = "vantage_v3_score"
-      parameters = {
-        "iceberg.field.current"  = "true"
-        "iceberg.field.id"       = "2"
-        "iceberg.field.optional" = "true"
-      }
-      type = "int"
-    }
-
-    columns {
-      name = "trade_date"
-      parameters = {
-        "iceberg.field.current"  = "true"
-        "iceberg.field.id"       = "3"
-        "iceberg.field.optional" = "true"
-      }
-      type = "date"
-    }
-  }
-}
-
 #####################################
 # Credit Score (Delta table format)
 #####################################
