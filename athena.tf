@@ -1,5 +1,5 @@
 resource "aws_athena_workgroup" "data_lake_wg" {
-  name        = "data_lake_wg"
+  name = "data_lake_wg"
 
   configuration {
     enforce_workgroup_configuration    = true

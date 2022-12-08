@@ -45,6 +45,29 @@ resource "aws_emrserverless_application" "credit_score_app" {
   }
 }
 
+###########################
+# EMR Serverless job role
+###########################
+
+resource "aws_iam_role" "emr_serverless_job_role" {
+  name               = "emr-serverless-job-role"
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "emr-serverless.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+EOF
+}
+
 ##################
 # ntc_sand_1 VPC
 ##################

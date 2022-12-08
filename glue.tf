@@ -53,3 +53,48 @@ resource "aws_glue_catalog_table" "credit_score_delta" {
     }
   }
 }
+
+###################################################################
+# Policy to allow read and write access to the Glue Data Catalog
+###################################################################
+
+resource "aws_iam_policy" "glue_access_rw" {
+  name        = "GlueAccess"
+  description = "Allows read and write access to the Glue Data Catalog"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "GlueCreateAndReadDataCatalog",
+        "Effect": "Allow",
+        "Action": [
+            "glue:BatchCreatePartition",
+            "glue:GetDatabase",
+            "glue:GetPartition",
+            "glue:CreateTable",
+            "glue:GetTables",
+            "glue:GetPartitions",
+            "glue:CreateDatabase",
+            "glue:UpdateTable",
+            "glue:CreatePartition",
+            "glue:GetDatabases",
+            "glue:GetUserDefinedFunctions",
+            "glue:GetTable"
+        ],
+        "Resource": ["*"]
+      }
+    ]
+}
+EOF
+}
+
+###################################################################
+# Give EMR Serverless Job role read/write access to Glue Catalog
+###################################################################
+
+resource "aws_iam_role_policy_attachment" "allow_job_to_access_glue_catalog" {
+  role       = aws_iam_role.emr_serverless_job_role.name
+  policy_arn = aws_iam_policy.glue_access_rw.arn
+}
