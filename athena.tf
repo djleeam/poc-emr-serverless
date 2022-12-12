@@ -155,3 +155,68 @@ resource "aws_iam_role_policy_attachment" "athena_spark_role_policy_attachment" 
   role       = aws_iam_role.athena_spark_execution_role.name
   policy_arn = aws_iam_policy.athena_spark_role_policy.arn
 }
+
+###########################
+# Athena/Glue role policy
+###########################
+
+resource "aws_iam_policy" "athena_glue_role_policy" {
+  name        = "athena-glue-role-policy"
+  description = "This policy will be used for Athena Spark workgroups."
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "GlueReadDatabases",
+            "Effect": "Allow",
+            "Action": [
+                "glue:GetDatabases"
+            ],
+            "Resource": "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"
+        },
+        {
+            "Sid": "GlueReadDatabase",
+            "Effect": "Allow",
+            "Action": [
+                "glue:GetDatabase",
+                "glue:GetTable",
+                "glue:GetTables",
+                "glue:GetPartition",
+                "glue:GetPartitions"
+            ],
+            "Resource": [
+                "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog",
+                "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/data_lake_silver",
+                "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/data_lake_silver/*",
+                "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/default"
+            ]
+        },
+        {
+            "Sid": "GlueCreateUpdateTable",
+            "Effect": "Allow",
+            "Action": [
+                "glue:CreateTable",
+                "glue:UpdateTable",
+                "glue:BatchCreatePartition"
+            ],
+            "Resource": [
+                "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog",
+                "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/data_lake_silver",
+                "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/data_lake_silver/*"
+            ]
+        }
+    ]
+}
+EOF
+}
+
+#######################################
+# Athena/Glue role policy attachment
+#######################################
+
+resource "aws_iam_role_policy_attachment" "athena_glue_role_policy_attachment" {
+  role       = aws_iam_role.athena_spark_execution_role.name
+  policy_arn = aws_iam_policy.athena_glue_role_policy.arn
+}
