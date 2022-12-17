@@ -91,6 +91,14 @@ resource "aws_s3_object" "code_credit_score_delta_to_postgres" {
   etag   = filemd5("code/credit_score_delta_to_postgres.py")
 }
 
+resource "aws_s3_object" "code_mla_status" {
+  bucket = aws_s3_bucket.mls_sandbox.id
+  key    = "code/mla_status.py"
+  acl    = "private"
+  source = "code/mla_status.py"
+  etag   = filemd5("code/mla_status.py")
+}
+
 resource "aws_s3_object" "code_ge_profile" {
   bucket = aws_s3_bucket.mls_sandbox.id
   key    = "code/ge_profile.py"

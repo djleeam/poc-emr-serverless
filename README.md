@@ -189,6 +189,28 @@ JOB_RUN_ID=`aws emr-serverless start-job-run \
     }' --profile ntc.sand.1 | jq -r '.jobRunId?'` && export JOB_RUN_ID
 ```
 
+### Job: mla_status.py
+```
+JOB_RUN_ID=`aws emr-serverless start-job-run \
+    --name "MLA Status" \
+    --application-id $APPLICATION_ID \
+    --execution-role-arn $JOB_ROLE_ARN \
+    --job-driver '{
+        "sparkSubmit": {
+            "entryPoint": "s3://'${S3_BUCKET}'/code/mla_status.py",
+            "entryPointArguments": ["s3://'${S3_BUCKET}'/data-lake/bronze/responses", "s3://'${S3_BUCKET}'/data-lake/silver"],
+            "sparkSubmitParameters": "--packages io.delta:delta-core_2.12:2.1.1,software.amazon.awssdk:bundle:2.18.24,software.amazon.awssdk:url-connection-client:2.18.24"
+        }
+    }' \
+    --configuration-overrides '{
+        "monitoringConfiguration": {
+            "s3MonitoringConfiguration": {
+                "logUri": "s3://'${S3_BUCKET}'/logs/emr_serverless"
+            }
+        }
+    }' --profile ntc.sand.1 | jq -r '.jobRunId?'` && export JOB_RUN_ID
+```
+
 ## Get job stdout
 ```
 aws s3 cp s3://${S3_BUCKET}/logs/emr_serverless/applications/$APPLICATION_ID/jobs/$JOB_RUN_ID/SPARK_DRIVER/stdout.gz - --profile ntc.sand.1 | gunzip | less
