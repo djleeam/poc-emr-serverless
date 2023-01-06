@@ -25,6 +25,7 @@ resource "aws_athena_workgroup" "athena_spark_wg" {
   description = "Athena workgroup with PySpark engine v3"
 
   configuration {
+    execution_role                     = aws_iam_role.athena_spark_execution_role.arn
     enforce_workgroup_configuration    = false
     publish_cloudwatch_metrics_enabled = true
 
@@ -43,7 +44,7 @@ resource "aws_athena_workgroup" "athena_spark_wg" {
 #############################
 
 resource "aws_iam_role" "athena_spark_execution_role" {
-  name               = "athena-spark-execution-role"
+  name = "athena-spark-execution-role"
   assume_role_policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
